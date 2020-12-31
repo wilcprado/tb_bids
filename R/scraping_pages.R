@@ -74,7 +74,7 @@ dt_char_bid <-
     char_level = as.numeric(str_replace_all(char_level, '\\| Vocation', "")),
     i_date = as.Date(str_sub(start, 8, 18), format = '%b %d %Y'),
     e_date = as.Date(str_sub(end, 6, 16), format = '%b %d %Y'),
-    bid = sub(" .*", "", str_sub(end, 40, 55)),
+    bid = sub(" .*", "", gsub(',','',str_sub(dt_bid$end, 40, 55))),
 
     gender = case_when(
       str_detect(vocation, "Male") ~ "Male",
