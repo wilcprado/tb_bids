@@ -1,0 +1,85 @@
+---
+title: "Análise"
+output: html_notebook
+---
+
+Conferindo quais valores saem mais
+
+```{r}
+data_tibia %>% 
+  mutate(valor_min=if_else(bid==57,1,0)) %>% 
+  count(bid) %>% 
+  group_by(bid) %>% 
+  summarise(Quantidade=n,Taxa=(n/25000)*100) %>% 
+  arrange(desc(Taxa)) %>% 
+  slice(1:5)
+
+```
+
+A vocação Paladin tem mais vendas se comparada as demais. 
+Os mundos distribuídos em South/North America e Europe mostram que estão bem equilibrados em anúncios classificando-os por vocação, com exceção de Rooker, que notavelmente teve mais anúncios na Europa e um menor número nas demais localidades.
+
+```{r}
+
+data_tibia %>% 
+  filter(bid==57) %>% 
+   mutate(regiao= case_when(
+    str_sub(world,-3)=='bra'~ 'SOUTH AMERICA',
+    str_sub(world,-3)=='era'~ 'NORTH AMERICA',
+    TRUE~'EUROPE'
+  )) %>% 
+  group_by(vocation,regiao) %>% 
+  summarise(qtd_voc=sum(n())) %>% 
+  ggplot(aes(x=vocation,y=qtd_voc,fill=regiao))+geom_bar(stat = "identity",color='black') +
+  theme_minimal()
+
+```
+
+Personagens de level 8 e 50 tem um pico nos anúncios
+
+```{r}
+ggplot(data_tibia %>% filter(bid==57), aes(x=char_level)) + 
+   geom_histogram( binwidth=2, fill="#69b3a2", color="#e9ecef", alpha=0.9)+
+  scale_x_continuous(breaks = seq(0,500,10))+theme_minimal()
+
+```
+
+Paladinos têm mais anúncios, mas a vocação Sorcerer tem o valor mais baixo.
+
+```{r}
+#media_bid= format(round(mean(bid), 3), nsmall = 2) )
+#maiores$world <- factor(maiores$world , levels = maiores$world [order(maiores$media_bid)])
+
+
+data_tibia %>%
+  filter(bid==57) %>% 
+  ggplot( aes(x=vocation, y=char_level, fill=vocation)) +
+    geom_boxplot() +
+    #scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    #theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Level por vocação") +
+    xlab("")
+``{r}
+
+```
+
+
+```{r}
+
+```
+## test
+
+```{r}
+filter(speed>5)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
