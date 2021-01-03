@@ -1,11 +1,22 @@
 ---
-title: "Análise"
+title: "Análise de valor minímo"
 output: html_notebook
 ---
 
-Conferindo quais valores saem mais
+Esta análise discorre sobre dados de vendas de personagens de um mmprg anunciados no site oficial do game que funciona de modo de leilão onde os próprios jogadores podem anunciar seus respectivos personagens para venda. Foi coletada uma amostra dos últimos 25.000 anúncios, feitos durante o período de 13/11/2020 a 32/12/2020. 
+Não está sendo levado em consideração o status da venda (se foi vendido ou não), será analisada a expectativa do usuário que anuncia seu personagem, uma vez que é ele quem define o preço praticado.\
+Neste estudo vamos analisar o preço minímo a ser pago por um personagem (57 Tibia coins), imaginando um cenário onde queira se gastar o minímo possível o que podemos obter com a quantia.
+
+##### Glosário
+Bid: valor do lance de leilão em Tibia coins (moeda interna do jogo)\
+World: servidor que foi anunciado\
+Vocation: classe de cada personagem\
+Tibia coins: moeda do jogo\
+
+Podemos ver na tabela que o valor inicial mais baixo ofertado no leilão (57 Tibia coins) é também o mais presente, com 688 registros, representando 2,75% do total. Seguido de valores 500, 1000, 2000, 1500, que também podem representar uma preferência em valores redondos.
 
 ```{r}
+
 data_tibia %>% 
   mutate(valor_min=if_else(bid==57,1,0)) %>% 
   count(bid) %>% 
@@ -13,14 +24,27 @@ data_tibia %>%
   summarise(Quantidade=n,Taxa=(n/25000)*100) %>% 
   arrange(desc(Taxa)) %>% 
   slice(1:5)
-
 ```
 
-A vocação Paladin tem mais vendas se comparada as demais. 
-Os mundos distribuídos em South/North America e Europe mostram que estão bem equilibrados em anúncios classificando-os por vocação, com exceção de Rooker, que notavelmente teve mais anúncios na Europa e um menor número nas demais localidades.
 
 ```{r}
+```
 
+Já filtrado apenas valores minímos de leilão que são 57 Tc's, qual vocação tem mais presença nos anúncios? Notadamente, vocações Paladin e Sorcerer têm mais aparições se comparada as demais. E rooker, por sua vez, é mais dificil de se encontra-los.
+```{r}
+
+data_tibia %>% 
+  filter(bid==57) %>% 
+  group_by(vocation) %>% 
+  summarise(qtd_voc=sum(n())) %>% 
+  ggplot(aes(x=vocation,y=qtd_voc,fill=vocation))+
+  geom_bar(stat = "identity",color='black') +
+    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+Os servidores (world) são hospedados foram classificados em South/North America e Europe, que são suas reais localizações. Com base nessa separação, é visível que a ordem de anúncios entre os continentes por venda de vocação não se altera muito. Também é possível notar que Rooker mesmo sendo uma pequena quantia, tem seu maior número de anúncios em servidores europeus.
+
+```{r}
 data_tibia %>% 
   filter(bid==57) %>% 
    mutate(regiao= case_when(
@@ -30,21 +54,15 @@ data_tibia %>%
   )) %>% 
   group_by(vocation,regiao) %>% 
   summarise(qtd_voc=sum(n())) %>% 
-  ggplot(aes(x=vocation,y=qtd_voc,fill=regiao))+geom_bar(stat = "identity",color='black') +
-  theme_minimal()
+  ggplot(aes(x=vocation,y=qtd_voc,fill=vocation))+
+  geom_bar(stat = "identity",color='black') +
+    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+  facet_wrap(~regiao)
+  
 
 ```
 
-Personagens de level 8 e 50 tem um pico nos anúncios
-
-```{r}
-ggplot(data_tibia %>% filter(bid==57), aes(x=char_level)) + 
-   geom_histogram( binwidth=2, fill="#69b3a2", color="#e9ecef", alpha=0.9)+
-  scale_x_continuous(breaks = seq(0,500,10))+theme_minimal()
-
-```
-
-Paladinos têm mais anúncios, mas a vocação Sorcerer tem o valor mais baixo.
+Os Paladinos têm mais anúncios, mas no boxplot pode-ser ver que os leveis são equilibrados não sofrendo com outliers. O sorcerer demonstra ser uma vocação monetariamente melhor, com apenas 57 Tibia coins pode-se encontrar com certa facilidade personagens de level 80 e também encontrar acima de level 110. O Druid, entretanto, pode ser uma aposta, por conter 6 outliers de leveis altos, sendo uma "barganha" para um lance de 57 Tc's.
 
 ```{r}
 #media_bid= format(round(mean(bid), 3), nsmall = 2) )
@@ -63,23 +81,35 @@ data_tibia %>%
     ) +
     ggtitle("Level por vocação") +
     xlab("")
-``{r}
 
 ```
+
+
+Olhando a densidade por vocação, confirma-se que Sorcerer tem um range maior de level, sendo o mais barato, e também  que Rooker frequentemente são os mais caros
+
 
 
 ```{r}
+library(ggridges)
+ggplot(data_tibia %>% filter(bid==57), aes(x = char_level, y = vocation, fill = vocation)) +
+  geom_density_ridges() 
 
 ```
-## test
-
+Visando agora a distribuição entre todos
+O histograma mostra que os personagens de level 8 e 50 têm um pico nos anúncios, e que a partir do level 100, esperadamente, as quantidades sofrem uma queda.
 ```{r}
-filter(speed>5)
+
+ggplot(data_tibia %>% filter(bid==57), aes(x=char_level)) + 
+   geom_histogram( binwidth=2, fill="#69b3a2", color="#e9ecef", alpha=0.9)+
+  scale_x_continuous(breaks = seq(0,500,10))
+
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+
 
